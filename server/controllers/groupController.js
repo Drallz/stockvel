@@ -23,6 +23,21 @@ const createGroup = async (req, res) => {
     }
 };
 
+const getGroups = async (req, res) => {
+    try {
+        const groupsSnapshot = await db.collection('groups').get();
+        const groups = groupsSnapshot.docs.map(doc => ({ 
+            id: doc.id, 
+            ...doc.data() 
+        }));
+        res.status(200).json(groups);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to fetch groups' });
+    }
+};
+
 module.exports = {
-    createGroup
+    createGroup,
+    getGroups
 };
