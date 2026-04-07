@@ -38,7 +38,46 @@ const getGroups = async (req, res) => {
     }
 };
 
+const createJoinRequest = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { userId } = req.body; // Assuming userId is sent in body, later from auth
+
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+
+        // Check if group exists
+        const groupDoc = await db.collection('groups').doc(groupId).get();
+        if (!groupDoc.exists) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        // Check if join request already exists
+        const existingRequest = await db.collection('joinRequests')
+            .where('groupId', '==', groupId)
+            .where('userId', '==', userId)
+            .get();
+        if (!existingRequest.empty) {
+            return res.status(400).json({ error: 'Join request already sent' });
+        }
+
+        await db.collection('joinRequests').add({
+            groupId,
+            userId,
+            status: 'pending',
+            createdAt: new Date()
+        });
+
+        res.status(201).json({ message: 'Join request sent successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to send join request' });
+    }
+};
+
 module.exports = {
     createGroup,
-    getGroups
+    getGroups,
+    createJoinRequest
 };

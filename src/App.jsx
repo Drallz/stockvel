@@ -16,6 +16,7 @@ import UserDashboard from "./components/UserDashboard";
 
 import AdminPage from "./pages/AdminPage";
 import CreateGroupPage from "./pages/CreateGroupPage";
+import BrowseGroupsPage from "./pages/BrowseGroupsPage";
 
 import "./App.css";
 import "./AdminMain.css";
@@ -73,10 +74,11 @@ function App() {
             }
           />
 
-          {/* 🔥 YOUR PAGES (integrated properly) */}
+          {/*  YOUR PAGES (integrated properly) */}
           <Route path="/" element={<Navigate to="/admin" />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/create-group" element={<CreateGroupPage />} />
+          <Route path="/browse-groups" element={<BrowseGroupsPage />} />
 
           {/* Unauthorized */}
           <Route path="/unauthorized" element={<h2>Access Denied</h2>} />
