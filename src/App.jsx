@@ -1,12 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import NavBar from "./components/NavBar";
+import NavBar from "./components/NavBar.jsx";
 import LandingPage from "./components/LandingPage";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import AdminDashboard from "./components/AdminDashboard";
 import TreasurerDashboard from "./components/TreasurerDashboard.jsx";
 import UserDashboard from "./components/UserDashboard";
-import AddContribution from "./components/AddContribution";
 
 import CreateGroupPage from "./pages/CreateGroupPage";
 import BrowseGroupsPage from "./pages/BrowseGroupsPage";
@@ -60,15 +59,6 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['user', 'treasurer', 'admin']}>
                 <UserDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/add-contribution"
-            element={
-              <ProtectedRoute allowedRoles={['user', 'treasurer', 'admin']}>
-                <AddContribution />
               </ProtectedRoute>
             }
           />
