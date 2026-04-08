@@ -36,6 +36,7 @@ const Navbar = () => {
           <>
             <Link to="/add-contribution">Add Contribution</Link>
             <span className="user-welcome">Welcome, {user.email} ({user.role})</span>
+            <Link to="/browse-groups" onClick={() => setIsOpen(false)}>Browse Groups</Link>
             {user.role === 'admin' && <Link to="/admin" onClick={() => setIsOpen(false)}>Admin Panel</Link>}
             {user.role === 'treasurer' && <Link to="/treasurer" onClick={() => setIsOpen(false)}>Treasurer Panel</Link>}
             {(user.role === 'user' || user.role === 'general') && <Link to="/dashboard" onClick={() => setIsOpen(false)}>My Dashboard</Link>}
