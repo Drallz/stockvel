@@ -47,6 +47,16 @@ function App() {
       </AuthProvider>
     </Router>
   );
+
+  return (
+    <div className="App">
+      Contributions
+      <input type="text" ref={contributionRef} placeholder="Enter contribution amount" />
+      <input type="date" ref={dateRef} />
+      <select name="date" id=""></select>
+      <button onClick={handleAddContribution}>Add Contribution</button>
+    </div>
+  );
 }
 
 export default App;
