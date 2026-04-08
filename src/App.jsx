@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import Navbar from './components/NavBar';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useRef } from 'react';
 import { db, auth } from './Firebase-Config';
 import { collection, addDoc } from 'firebase/firestore';
+import AddContribution from './pages/AddContribution';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, role } = useAuth();
