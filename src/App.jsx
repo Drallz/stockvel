@@ -11,7 +11,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useRef } from 'react';
 import { db, auth } from './Firebase-Config';
 import { collection, addDoc } from 'firebase/firestore';
-import AddContribution from './pages/AddContribution';
+import {AddContribution} from './pages/AddContribution';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, role } = useAuth();
@@ -37,7 +37,7 @@ function App() {
           } />
           
           <Route path="/treasurer" element={
-            
+
             <ProtectedRoute allowedRoles={['treasurer', 'admin']}>
               <TreasurerDashboard />
             </ProtectedRoute>
