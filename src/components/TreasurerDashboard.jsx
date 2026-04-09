@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/firebase'; 
 
-function TreasurerDashboard({ currentGroupId = "demo-group-id" }) {
+function TreasurerDashboard({ currentGroupId = "group_001" }) {
   const [showFinancePanel, setShowFinancePanel] = useState(false);
   const [contributions, setContributions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,21 +24,24 @@ function TreasurerDashboard({ currentGroupId = "demo-group-id" }) {
 
   useEffect(() => {
     const fetchContributions = async () => {
+      console.log("Fetching for Group ID:", currentGroupId);
       try {
         const q = query(
-          collection(db, "contributions"),
+          collection(db, "Contributions"), 
           where("groupId", "==", currentGroupId)
         );
 
         const querySnapshot = await getDocs(q);
-        const fetchedData = querySnapshot.docs.map(doc => ({
-          id: doc.id, 
-          ...doc.data() 
+        console.log("Documents found:", querySnapshot.size);
+
+        const fetchedData = querySnapshot.docs.map(d => ({
+          id: d.id, 
+          ...d.data() 
         }));
 
         setContributions(fetchedData);
       } catch (error) {
-        console.error(error);
+        console.error("Firebase Fetch Error:", error);
       } finally {
         setLoading(false);
       }
@@ -47,20 +50,22 @@ function TreasurerDashboard({ currentGroupId = "demo-group-id" }) {
     fetchContributions();
   }, [currentGroupId]);
 
-  const totalContributions = contributions.reduce((sum, c) => 
-    sum + (c.status?.toLowerCase() === 'paid' ? Number(c.amount) : 0), 0
+  const isPaidOrCompleted = (status) => {
+    const s = status?.toLowerCase();
+    return s === 'paid' || s === 'completed';
+  };
+
+  const totalCollected = contributions.reduce((sum, c) => 
+    sum + (isPaidOrCompleted(c.status) ? Number(c.amount) : 0), 0
   );
   
-  const pendingCount = contributions.filter(c => 
-    c.status?.toLowerCase() === 'pending'
-  ).length;
-  
-  const members = contributions.length; 
+  const pendingContributions = contributions.filter(c => !isPaidOrCompleted(c.status));
+  const pendingCount = pendingContributions.length;
   const nextRotation = '15 May 2026';
 
   const handleConfirm = async (id) => {
     try {
-      const contributionRef = doc(db, "contributions", id);
+      const contributionRef = doc(db, "Contributions", id);
       const now = new Date();
 
       await updateDoc(contributionRef, {
@@ -73,7 +78,7 @@ function TreasurerDashboard({ currentGroupId = "demo-group-id" }) {
       ));
 
     } catch (error) {
-      console.error(error);
+      console.error("Confirm Error:", error);
       alert("Failed to confirm payment.");
     }
   };
@@ -96,18 +101,18 @@ function TreasurerDashboard({ currentGroupId = "demo-group-id" }) {
       <div style={{ maxWidth: '1000px', margin: '0 auto', backgroundColor: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
         
         <h2 style={{ color: '#1e4a2a', marginTop: '0' }}>Treasurer Dashboard</h2>
-        <p style={{ color: '#666', marginBottom: '2rem' }}>Audit-ready contribution tracking.</p>
+        <p style={{ color: '#666', marginBottom: '2rem' }}>Audit-ready contribution tracking for {currentGroupId}.</p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           <div style={{ textAlign: 'center', padding: '1.5rem', border: '1px solid #eee', borderRadius: '15px' }}>
             <div style={{ fontSize: '2rem' }}>💰</div>
             <h3 style={{ margin: '10px 0' }}>Total Collected</h3>
-            <p style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2c6e2f', margin: 0 }}>R {totalContributions}</p>
+            <p style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#2c6e2f', margin: 0 }}>R {totalCollected}</p>
           </div>
           <div style={{ textAlign: 'center', padding: '1.5rem', border: '1px solid #eee', borderRadius: '15px' }}>
             <div style={{ fontSize: '2rem' }}>👥</div>
-            <h3 style={{ margin: '10px 0' }}>Active Members</h3>
-            <p style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: 0 }}>{members}</p>
+            <h3 style={{ margin: '10px 0' }}>Total Records</h3>
+            <p style={{ fontSize: '1.8rem', fontWeight: 'bold', margin: 0 }}>{contributions.length}</p>
           </div>
           <div style={{ textAlign: 'center', padding: '1.5rem', border: '1px solid #eee', borderRadius: '15px' }}>
             <div style={{ fontSize: '2rem' }}>⏳</div>
@@ -152,8 +157,45 @@ function TreasurerDashboard({ currentGroupId = "demo-group-id" }) {
           </div>
         )}
 
+        {pendingCount > 0 && (
+          <div style={{ marginBottom: '2rem', padding: '1.5rem', border: '2px solid #f4b942', borderRadius: '15px', backgroundColor: '#fffdf0' }}>
+            <h3 style={{ marginTop: 0, color: '#1e4a2a' }}>⏳ Pending Payments ({pendingCount})</h3>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #f4b942' }}>
+                    <th style={{ padding: '0.8rem' }}>Member</th>
+                    <th style={{ padding: '0.8rem' }}>Amount</th>
+                    <th style={{ padding: '0.8rem' }}>Due Date</th>
+                    <th style={{ padding: '0.8rem' }}>Method</th>
+                    <th style={{ padding: '0.8rem' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingContributions.map(c => (
+                    <tr key={c.id} style={{ borderBottom: '1px solid #f4e8b0' }}>
+                      <td style={{ padding: '0.8rem', fontWeight: '500' }}>{c.member || c.userId || 'Unknown User'}</td>
+                      <td style={{ padding: '0.8rem' }}>R {c.amount}</td>
+                      <td style={{ padding: '0.8rem', color: '#666' }}>{c.date || 'N/A'}</td>
+                      <td style={{ padding: '0.8rem', color: '#666' }}>{c.paymentMethod || 'N/A'}</td>
+                      <td style={{ padding: '0.8rem' }}>
+                        <button
+                          onClick={() => handleConfirm(c.id)}
+                          style={{ backgroundColor: '#2c6e2f', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '5px', cursor: 'pointer', fontSize: '0.8rem' }}
+                        >
+                          Confirm
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         <div style={{ padding: '1.5rem', border: '1px solid #eee', borderRadius: '15px' }}>
-          <h3 style={{ marginTop: 0 }}>Member Contributions</h3>
+          <h3 style={{ marginTop: 0 }}>All Member Contributions</h3>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
@@ -161,19 +203,20 @@ function TreasurerDashboard({ currentGroupId = "demo-group-id" }) {
                   <th style={{ padding: '1rem' }}>Member</th>
                   <th style={{ padding: '1rem' }}>Amount</th>
                   <th style={{ padding: '1rem' }}>Date Details</th>
+                  <th style={{ padding: '1rem' }}>Method</th>
                   <th style={{ padding: '1rem' }}>Status</th>
                   <th style={{ padding: '1rem' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {contributions.map(c => {
+                  const paid = isPaidOrCompleted(c.status);
                   const statusStr = c.status?.toLowerCase() || 'pending';
-                  const isPaid = statusStr === 'paid';
                   const confTime = formatTimestamp(c.confirmedAt);
                   
                   return (
                     <tr key={c.id} style={{ borderBottom: '1px solid #eee' }}>
-                      <td style={{ padding: '1rem', fontWeight: '500' }}>{c.member || 'Unknown User'}</td>
+                      <td style={{ padding: '1rem', fontWeight: '500' }}>{c.member || c.userId || 'Unknown User'}</td>
                       <td style={{ padding: '1rem' }}>R {c.amount}</td>
                       <td style={{ padding: '1rem', color: '#666' }}>
                         <div style={{ fontSize: '0.9rem' }}>Due: {c.date || 'N/A'}</div>
@@ -183,10 +226,11 @@ function TreasurerDashboard({ currentGroupId = "demo-group-id" }) {
                           </small>
                         )}
                       </td>
+                      <td style={{ padding: '1rem', color: '#666' }}>{c.paymentMethod || 'N/A'}</td>
                       <td style={{ padding: '1rem' }}>
                         <span style={{
-                          background: isPaid ? '#eefbef' : '#fff5f5',
-                          color: isPaid ? '#2c6e2f' : '#721c24',
+                          background: paid ? '#eefbef' : '#fff5f5',
+                          color: paid ? '#2c6e2f' : '#721c24',
                           padding: '4px 12px',
                           borderRadius: '20px',
                           fontSize: '0.85rem',
@@ -196,7 +240,7 @@ function TreasurerDashboard({ currentGroupId = "demo-group-id" }) {
                         </span>
                       </td>
                       <td style={{ padding: '1rem' }}>
-                        {!isPaid && (
+                        {!paid && (
                           <button 
                             onClick={() => handleConfirm(c.id)}
                             style={{ backgroundColor: '#2c6e2f', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '5px', cursor: 'pointer', fontSize: '0.8rem' }}
